@@ -5,6 +5,20 @@ from config import translate_id_to_name
 from models.data_model import GemTDHeroesData, GemTDQuest
 
 
+class QuestCard(QWidget):
+    def __init__(self, data: GemTDHeroesData):
+        super().__init__()
+        layout = QVBoxLayout()
+
+        quest = data.quest
+
+        layout.addWidget(_quest_random(quest))
+        layout.addWidget(_quest_extend(quest))
+        layout.addWidget(_quest_pass(quest))
+
+        self.setLayout(layout)
+
+
 def _format_expire(expire: int):
     d = expire // 86400
     h = (expire % 86400) // 3600
@@ -50,17 +64,3 @@ def _get_label(name, reward, time):
     layout.addWidget(label_quest)
     layout.addWidget(label_time)
     return widget
-
-
-class QuestCard(QWidget):
-    def __init__(self, data: GemTDHeroesData):
-        super().__init__()
-        layout = QVBoxLayout()
-
-        quest = data.quest
-
-        layout.addWidget(_quest_random(quest))
-        layout.addWidget(_quest_extend(quest))
-        layout.addWidget(_quest_pass(quest))
-
-        self.setLayout(layout)

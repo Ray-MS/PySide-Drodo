@@ -1,22 +1,19 @@
-
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import requests
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QFont, QIcon, QPalette
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-                               QLineEdit, QListWidget, QListWidgetItem,
-                               QMainWindow, QPushButton, QStackedWidget,
-                               QVBoxLayout, QWidget)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QListWidget,
+                               QListWidgetItem, QPushButton, QVBoxLayout,
+                               QWidget)
 
 from config.url_manager import url_manager
 
 CACHE_FILE = 'account_cache.json'
 CACHE_TTL = 24 * 60 * 60
-KEY = os.getenv('STEAM_API_KEY')
 
 
 class Sidebar(QWidget):
@@ -39,6 +36,7 @@ class Sidebar(QWidget):
 
         self.input_field = QLineEdit()
         self.input_field.setFixedHeight(30)
+        self.input_field.setPlaceholderText("请输入 Account ID")
         bottom_layout.addWidget(self.input_field)
 
         self.add_button = QPushButton('添加账号')
@@ -57,6 +55,7 @@ class Sidebar(QWidget):
         item = QListWidgetItem(f'{name} ({account_id})')
         item.setTextAlignment(Qt.AlignLeft)
         item.setFont(QFont('Arial', 11))
+        item.setData(Qt.UserRole, account_id)
         self.list_widget.addItem(item)
 
         self._fetch_account_info(account_id)
@@ -91,6 +90,7 @@ class Sidebar(QWidget):
             json.dump(self.cache, fp, ensure_ascii=False)
 
     def _fetch_account_info(self, account_id: int):
+        KEY = os.getenv('STEAM_API_KEY')
         steam_id = str(0x110000100000000 + account_id)
         url = url_manager.build_url('player_summaries', source='steam', key=KEY, steam_ids=steam_id)
 

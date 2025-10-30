@@ -1,56 +1,65 @@
+import json
 import re
+from datetime import datetime
+from pathlib import Path
 
-from PySide6.QtCore import QThread
-from PySide6.QtWidgets import (QLabel, QLineEdit, QMainWindow, QPushButton,
-                               QTextEdit, QVBoxLayout, QWidget)
+from PySide6.QtCore import Qt, QThread
+from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QMainWindow,
+                               QPushButton, QVBoxLayout, QWidget)
 
 from models.data_model import GemTDHeroesData
 from network.fetcher import GemTDHeroesFetcher
+from ui.gemtd_widget import GemTDWidget
+from ui.info_view import InfoView
+from ui.quest_card import QuestCard
 from ui.sidebar import Sidebar
-from ui.widgets import QuestCard
+
+CACHE_FILE = 'account_cache.json'
+CACHE_TTL = 24 * 60 * 60
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self._init_ui()
+        self._load_cache()
         self.request_ids = set()
 
+    def _init_ui(self):
         self.setWindowTitle("Drodo App")
         self.setGeometry(100, 100, 800, 600)
 
-        label = QLabel("欢迎使用 Drodo", self)
-        label.move(50, 50)
-
         self.sidebar = Sidebar()
+        self.info_view = InfoView()
+        self.sidebar.list_widget.itemClicked.connect(self._on_sidebar_item_clicked)
 
-        self.input_id = QLineEdit()
-        self.input_id.setPlaceholderText("请输入 Account ID")
+        main_view_layout = QVBoxLayout()
+        main_view_layout.addWidget(self.info_view)
 
-        self.btn_fetch = QPushButton("获取数据")
-        self.btn_fetch.clicked.connect(self.on_fetch_clicked)
-
-        self.main_layout = QVBoxLayout()
-        self.main_layout.addWidget(self.sidebar)
-        self.main_layout.addWidget(self.input_id)
-        self.main_layout.addWidget(self.btn_fetch)
+        central_layout = QHBoxLayout()
+        central_layout.addWidget(self.sidebar)
+        central_layout.addLayout(main_view_layout)
 
         container = QWidget()
-        container.setLayout(self.main_layout)
+        container.setLayout(central_layout)
         self.setCentralWidget(container)
 
-    def on_fetch_clicked(self):
-        pattern = re.compile(r'^\d+$')
-        text = self.input_id.text().strip()
-        if not pattern.match(text):
-            return
+    def _load_cache(self):
+        if Path(CACHE_FILE).exists():
+            with open(CACHE_FILE, 'r', encoding='utf-8') as fp:
+                self.cache = json.load(fp)
+                for player in self.cache.get('players', {}).keys():
+                    self._add_account(int(player))
+        else:
+            self.cache = {
+                'lastUpdated': datetime.now().isoformat(),
+                'players': {},
+            }
 
-        account_id = int(text)
-        if account_id in self.request_ids:
-            return
-
-        self.request_ids.add(account_id)
-        self.start_fetch(account_id)
+    def _add_account(self, account_id: int):
+        self.sidebar._add_item(account_id)
+        self.info_view.add_page(account_id, GemTDWidget(account_id))
 
     def start_fetch(self, account_id: int):
         self.thread = QThread()
@@ -73,3 +82,7 @@ class MainWindow(QMainWindow):
 
     def handle_error(self, err_msg: str):
         print(f"请求出错：{err_msg}")
+
+    def _on_sidebar_item_clicked(self, item):
+        account_id = item.data(Qt.UserRole)
+        self.info_view.show_page(account_id)

@@ -9,9 +9,25 @@ class GemTDQuest(BaseModel):
     season: int
 
 
+class BestKills(BaseModel):
+    p1: int
+    p2: int
+    p3: int
+    p4: int
+
+
+class RankInfo(BaseModel):
+    rankall: str | int
+    rankcoop: str
+    rankrace: str
+    score: int
+    best_kills: BestKills
+
+
 class GemTDHeroesData(BaseModel):
     hero_sea: dict
     quest: GemTDQuest
+    rank_info: RankInfo
 
 
 class GemTDHeroesResponse(BaseModel):

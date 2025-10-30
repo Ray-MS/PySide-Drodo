@@ -16,8 +16,8 @@ Drodo/
 ├─- ui
 │   ├── __init__.py
 │   ├── main_window.py
-│   ├── sidebar.py
-│   └── widgets.py
+│   ├── quest_card.py
+│   └── sidebar.py
 ├─- .env
 ├─- app.py
 └── main.py
