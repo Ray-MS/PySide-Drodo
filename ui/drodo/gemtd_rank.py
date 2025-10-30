@@ -6,7 +6,7 @@ from models.data_model import GemTDHeroesData
 from network.fetcher import GemTDHeroesFetcher
 
 
-class GemTDWidget(QWidget):
+class GemTDRankWidget(QWidget):
     def __init__(self, account_id: int) -> None:
         super().__init__()
 
@@ -16,8 +16,6 @@ class GemTDWidget(QWidget):
         self._start_fetch()
 
     def _init_ui(self):
-        account_id_label = QLabel(f"Account ID: {self.account_id}")
-
         self.rank_score_label = QLabel("Rank Score: N/A")
         self.rank_coop_label = QLabel("Rank Coop: N/A")
         self.rank_race_label = QLabel("Rank Race: N/A")
@@ -38,7 +36,6 @@ class GemTDWidget(QWidget):
         best_kill_layout.addWidget(self.best_kill_p4)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(account_id_label)
         layout.addLayout(rank_layout)
         layout.addLayout(best_kill_layout)
 

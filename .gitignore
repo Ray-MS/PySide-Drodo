@@ -6,7 +6,11 @@ __pycache__/
 
 # Environment variables
 .env
+
+# cache files
+/cache
 account_cache.json
+resources_rc.py
 
 # temporary files
 bar.py

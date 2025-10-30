@@ -9,7 +9,8 @@ from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QMainWindow,
 
 from models.data_model import GemTDHeroesData
 from network.fetcher import GemTDHeroesFetcher
-from ui.gemtd_widget import GemTDWidget
+from ui.drodo import DrodoWidget
+from ui.drodo.gemtd_widget import GemTDRankWidget
 from ui.info_view import InfoView
 from ui.quest_card import QuestCard
 from ui.sidebar import Sidebar
@@ -49,8 +50,8 @@ class MainWindow(QMainWindow):
         if Path(CACHE_FILE).exists():
             with open(CACHE_FILE, 'r', encoding='utf-8') as fp:
                 self.cache = json.load(fp)
-                for player in self.cache.get('players', {}).keys():
-                    self._add_account(int(player))
+                for account_id in self.cache.get('players', {}).keys():
+                    self._add_account(int(account_id))
         else:
             self.cache = {
                 'lastUpdated': datetime.now().isoformat(),
@@ -58,8 +59,8 @@ class MainWindow(QMainWindow):
             }
 
     def _add_account(self, account_id: int):
-        self.sidebar._add_item(account_id)
-        self.info_view.add_page(account_id, GemTDWidget(account_id))
+        self.sidebar._add_account(account_id)
+        self.info_view.add_page(account_id, DrodoWidget(account_id))
 
     def start_fetch(self, account_id: int):
         self.thread = QThread()

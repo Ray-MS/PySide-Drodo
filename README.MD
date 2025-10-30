@@ -1,23 +1,33 @@
 # Drodo
+
+## Command
+```
+pyside6-rcc resources.qrc -o resources_rc.py
+python main.py
+```
+
 ## File Structure
 ```
 Drodo/
-├─- config
+├─- config/
 │   ├── __init__.py
 │   ├── mapping.py
 │   ├── url_manager.py
 │   └── urls.yaml
-├─- models
+├─- models/
 │   ├── __init__.py
 │   └── data_model.py
-├─- network
+├─- network/
 │   ├── __init__.py
 │   └── fetcher.py
-├─- ui
+├─- ui/
 │   ├── __init__.py
-│   ├── main_window.py
-│   ├── quest_card.py
-│   └── sidebar.py
+│   ├── drodo/
+│   ├── sidebar/
+│   └── main_window.py
+├─- resources/
+├─- resources.qrc
+├─- resources_rc.py
 ├─- .env
 ├─- app.py
 └── main.py

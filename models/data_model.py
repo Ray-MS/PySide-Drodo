@@ -26,6 +26,9 @@ class RankInfo(BaseModel):
 
 class GemTDHeroesData(BaseModel):
     hero_sea: dict
+    shell: int
+    ice: int
+    candy: int
     quest: GemTDQuest
     rank_info: RankInfo
 

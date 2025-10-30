@@ -19,6 +19,9 @@ CACHE_TTL = 24 * 60 * 60
 class Sidebar(QWidget):
     def __init__(self) -> None:
         super().__init__()
+
+        self.account_ids = set()
+
         self._init_ui()
         self._load_cache()
 
@@ -48,9 +51,14 @@ class Sidebar(QWidget):
 
         self.setFixedWidth(220)
 
-    def _add_item(self, account_id: int):
-        cached = self.cache['players'].get(account_id)
-        name = cached.get('personaname', 'account') if cached else 'account'
+    def _add_account(self, account_id: int):
+        if account_id in self.account_ids:
+            return
+
+        self.account_ids.add(account_id)
+
+        cached = self.cache['players'].get(str(account_id), {})
+        name = cached.get('personaname', 'account')
 
         item = QListWidgetItem(f'{name} ({account_id})')
         item.setTextAlignment(Qt.AlignLeft)
@@ -67,12 +75,12 @@ class Sidebar(QWidget):
             return
 
         account_id = int(text)
-        self._add_item(account_id)
+        self._add_account(account_id)
         self.input_field.clear()
 
         cached = self.cache['players'].get(str(account_id))
         if cached:
-            self._add_item(account_id)
+            self._add_account(account_id)
 
     def _load_cache(self):
         if Path(CACHE_FILE).exists():

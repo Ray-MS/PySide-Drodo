@@ -1,3 +1,7 @@
+import json
+from datetime import datetime
+from pathlib import Path
+
 import requests
 from PySide6.QtCore import QObject, Signal, Slot
 
@@ -11,15 +15,36 @@ class GemTDHeroesFetcher(QObject):
 
     def __init__(self, account_id: int) -> None:
         super().__init__()
+
         self.steam_id = str(0x110000100000000 + account_id)
+        self.cache_file = Path('cache', f'{self.steam_id}.gemtd.heroes')
 
     @Slot()
     def run(self) -> None:
+        if self._check_cache():
+            return
+
         url = url_manager.build_url('gemtd.heroes', steam_id=self.steam_id)
         try:
             resp = requests.get(url, timeout=10)
             resp.raise_for_status()
             data = GemTDHeroesResponse(**resp.json()).data[self.steam_id]
+            self._save_cache(data.model_dump(by_alias=True))
             self.finished.emit(data)
         except Exception as e:
             self.error.emit(str(e))
+
+    def _check_cache(self) -> bool:
+        if self.cache_file.exists():
+            with open(self.cache_file, 'r', encoding='utf-8') as fp:
+                cache = json.load(fp)
+                cache_time = datetime.fromisoformat(cache['lastUpdated'])
+                if (datetime.now() - cache_time).days == 0:
+                    data = GemTDHeroesData(**cache['data'])
+                    self.finished.emit(data)
+                    return True
+        return False
+
+    def _save_cache(self, data: dict) -> None:
+        with open(self.cache_file, 'w', encoding='utf-8') as fp:
+            json.dump({'lastUpdated': datetime.now().isoformat(), 'data': data}, fp, ensure_ascii=False)
