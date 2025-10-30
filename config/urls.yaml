@@ -1,0 +1,12 @@
+sources:
+    drodo:
+        base: "http://gemtd.ppbizon.com/"
+        endpoints:
+            gemtd:
+                heroes: "gemtd/202203/heros/get/@{steam_id}"
+    steam:
+        base: "http://api.steampowered.com/"
+        endpoints:
+            player_summaries: "ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={steam_ids}"
+
+default_source: drodo
