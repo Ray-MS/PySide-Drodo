@@ -16,40 +16,37 @@ class GemTDLeaderboardRow(QFrame):
     ) -> None:
         super().__init__()
 
-        if coop is None and race is None:
-            raise
-        if coop is not None and race is not None:
-            raise
+        if bool(coop) == bool(race):
+            raise ValueError("GemTDLeaderboardRow must have exactly one of coop or race.")
+        self.avatars = []
+        self.score_label = QLabel()
 
-        self._init_ui()
         self._init_layout()
 
         self._set_coop(coop)
         self._set_race(race)
 
-    def _init_ui(self) -> None:
-        self.avatars = []
-        self.score = QLabel()
-
     def _init_layout(self) -> None:
         self.avatar_layout = QHBoxLayout()
-
         layout = QHBoxLayout(self)
         layout.addLayout(self.avatar_layout)
-        layout.addWidget(self.score)
+        layout.addWidget(self.score_label)
 
-    def _update_layout(self) -> None:
+    def _update_avatar_layout(self) -> None:
         for avatar in self.avatars:
             self.avatar_layout.addWidget(avatar)
 
     def _set_coop(self, coop: Optional[GemTDCoop]) -> None:
         if coop is None:
             return
+        player_ids = coop.player_ids.split(',')
+        self.avatars = [SteamAvatar(get_account_id(pid)) for pid in player_ids]
+        self.score_label.setText(str(coop.kill))
+        self._update_avatar_layout()
 
     def _set_race(self, race: Optional[GemTDRace]) -> None:
         if race is None:
             return
-        avatar = SteamAvatar(get_account_id(race.player_id))
-        self.avatars.append(avatar)
-        self.score.setText(str(race.race_level))
-        self._update_layout()
+        self.avatars = [SteamAvatar(get_account_id(race.player_id))]
+        self.score_label.setText(str(race.race_level))
+        self._update_avatar_layout()

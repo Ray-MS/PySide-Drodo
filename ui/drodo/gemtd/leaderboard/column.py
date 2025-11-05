@@ -15,17 +15,17 @@ class GemTDLeaderboardColumn(QFrame):
         self._init_layout()
 
     def _init_ui(self) -> None:
-        self.name_label = QLabel(self.name)
+        self.header_label = QLabel(self.name)
 
     def _init_layout(self) -> None:
         layout = QVBoxLayout(self)
-        layout.addWidget(self.name_label)
+        layout.addWidget(self.header_label)
+        layout.addStretch()
 
-    def add_rank(self, name: str) -> None:
-        rank_label = QLabel(str(name))
-        rank_label.setFixedWidth(30)
-        self.layout().addWidget(rank_label)
+    def add_coop_entry(self, coop: GemTDCoop) -> None:
+        row = GemTDLeaderboardRow(coop=coop)
+        self.layout().insertWidget(self.layout().count() - 1, row)
 
-    def add_race(self, race: GemTDRace) -> None:
+    def add_race_entry(self, race: GemTDRace) -> None:
         row = GemTDLeaderboardRow(race=race)
-        self.layout().addWidget(row)
+        self.layout().insertWidget(self.layout().count() - 1, row)
