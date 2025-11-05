@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/images">
-        <file>resources/images/award_candy.png</file>
-        <file>resources/images/award_ice.png</file>
-        <file>resources/images/award_shell.png</file>
-    </qresource>
-</RCC>

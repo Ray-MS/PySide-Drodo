@@ -3,7 +3,9 @@ sources:
         base: "http://gemtd.ppbizon.com/"
         endpoints:
             gemtd:
+                goods: "gemtd/201803/goods/list/@{steam_id}"
                 heroes: "gemtd/202203/heros/get/@{steam_id}"
+                leaderboard: "gemtd/leaderboard/@{steam_id}"
     steam:
         base: "http://api.steampowered.com/"
         endpoints:

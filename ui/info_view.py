@@ -1,15 +1,20 @@
-from PySide6.QtWidgets import QLabel, QStackedWidget, QVBoxLayout, QWidget
+from typing import Dict
+
+from PySide6.QtWidgets import QStackedWidget, QWidget
+
+from .drodo import GemTDMainWidget
+from .drodo.gemtd import GemTDLeaderboard
 
 
 class InfoView(QStackedWidget):
     def __init__(self) -> None:
         super().__init__()
 
-        self.pages = {}
+        self.pages: Dict[int, QWidget] = {}
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.add_page("default", _DefaultWidget())
+        self.add_page(0, GemTDLeaderboard())
 
     def add_page(self, key: int, widget: QWidget) -> None:
         if self.pages.get(key):
@@ -19,20 +24,11 @@ class InfoView(QStackedWidget):
         self.addWidget(widget)
         self.pages[key] = widget
 
-    def show_page(self, key: int) -> None:
-        if widget := self.pages.get(key):
+    def show_page(self, account_id: int) -> None:
+        if widget := self.pages.get(account_id):
             self.setCurrentWidget(widget)
         else:
-            self.setCurrentWidget(self.pages["default"])
-
-
-class _DefaultWidget(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
-        self._init_ui()
-
-    def _init_ui(self) -> None:
-        layout = QVBoxLayout(self)
-
-        self.label = QLabel("这里是默认视窗")
-        layout.addWidget(self.label)
+            self.setCurrentWidget(self.pages[0])
+            widget = GemTDMainWidget(account_id)
+            self.add_page(account_id, widget)
+            self.setCurrentWidget(widget)

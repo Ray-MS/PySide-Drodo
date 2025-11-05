@@ -1,0 +1,1 @@
+from .herosea import GemTDHeroseaWidget

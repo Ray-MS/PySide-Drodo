@@ -5,18 +5,25 @@ from config import translate_id_to_name
 from models.data_model import GemTDHeroesData, GemTDQuest
 
 
-class QuestCard(QWidget):
-    def __init__(self, data: GemTDHeroesData):
+class GemTDQuestCard(QWidget):
+    def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
 
+        self._init_ui()
+        self._init_layout()
+
+    def _init_ui(self) -> None:
+        pass
+
+    def _init_layout(self) -> None:
+        layout = QVBoxLayout(self)
+
+    def on_fetch_finished(self, data: GemTDHeroesData):
         quest = data.quest
 
-        layout.addWidget(_quest_random(quest))
-        layout.addWidget(_quest_extend(quest))
-        layout.addWidget(_quest_pass(quest))
-
-        self.setLayout(layout)
+        self.layout().addWidget(_quest_random(quest))
+        self.layout().addWidget(_quest_extend(quest))
+        self.layout().addWidget(_quest_pass(quest))
 
 
 def _format_expire(expire: int):

@@ -1,114 +1,121 @@
 import json
-import os
 from datetime import datetime
-from pathlib import Path
 
-import requests
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QHBoxLayout, QLineEdit, QListWidget,
                                QListWidgetItem, QPushButton, QVBoxLayout,
                                QWidget)
 
-from config.url_manager import url_manager
+from models import player_manager
+from network.steam import SteamPlayerSummariesFetcher
 
-CACHE_FILE = 'account_cache.json'
-CACHE_TTL = 24 * 60 * 60
+from .team import TeamCard
 
 
 class Sidebar(QWidget):
     def __init__(self) -> None:
         super().__init__()
 
+        self.account_cache = dict()
         self.account_ids = set()
+        self.items: dict[int, QListWidgetItem] = dict()
 
         self._init_ui()
-        self._load_cache()
+        self._init_layout()
+        self._init_connections()
 
-    def _init_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self._init_players()
 
-        self.list_widget = QListWidget()
-        layout.addWidget(self.list_widget)
-        layout.addStretch()
+    def _init_ui(self) -> None:
+        self.leaderboard_button = QPushButton("排行榜")
 
-        bottom_widget = QWidget()
-        bottom_layout = QHBoxLayout(bottom_widget)
-        bottom_layout.setContentsMargins(5, 5, 5, 5)
+        self.account_list = QListWidget()
 
-        self.input_field = QLineEdit()
-        self.input_field.setFixedHeight(30)
-        self.input_field.setPlaceholderText("请输入 Account ID")
-        bottom_layout.addWidget(self.input_field)
+        self.team_card = TeamCard()
 
-        self.add_button = QPushButton('添加账号')
-        self.add_button.setFixedHeight(30)
-        self.add_button.clicked.connect(self._on_add_clicked)
-        bottom_layout.addWidget(self.add_button)
+        self.account_input = QLineEdit()
+        self.account_input.setPlaceholderText("请输入 Account ID")
+        self.account_input.setFixedHeight(30)
 
-        layout.addWidget(bottom_widget)
+        self.add_account_button = QPushButton("添加账号")
+        self.add_account_button.setFixedHeight(30)
 
         self.setFixedWidth(220)
 
-    def _add_account(self, account_id: int):
-        if account_id in self.account_ids:
-            return
+    def _init_layout(self) -> None:
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(5, 5, 5, 5)
+        bottom_layout.addWidget(self.account_input)
+        bottom_layout.addWidget(self.add_account_button)
 
-        self.account_ids.add(account_id)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(self.leaderboard_button)
+        main_layout.addWidget(self.account_list)
+        main_layout.addWidget(self.team_card)
+        main_layout.addLayout(bottom_layout)
 
-        cached = self.cache['players'].get(str(account_id), {})
-        name = cached.get('personaname', 'account')
+    def _init_connections(self) -> None:
+        self.account_list.itemDoubleClicked.connect(self.team_card.add_player)
+        self.add_account_button.clicked.connect(self._on_add_account_clicked)
+        player_manager.updated.connect(self._on_player_manager_updated)
 
-        item = QListWidgetItem(f'{name} ({account_id})')
-        item.setTextAlignment(Qt.AlignLeft)
-        item.setFont(QFont('Arial', 11))
-        item.setData(Qt.UserRole, account_id)
-        self.list_widget.addItem(item)
+    def _init_players(self) -> None:
+        for account_id in player_manager.get_player_account_ids():
+            self.update_account(account_id, fetch=False)
 
-        self._fetch_account_info(account_id)
+    def _on_add_account_clicked(self) -> None:
+        text = self.account_input.text().strip()
+        if text.isdigit():
+            account_id = int(text)
+            if account_id > 0:
+                player_manager.add_player(account_id)
+                self.update_account(account_id, fetch=False)
 
-    def _on_add_clicked(self):
-        text = self.input_field.text()
-        if not text.isdigit():
-            self.input_field.clear()
-            return
+        self.account_input.clear()
 
-        account_id = int(text)
-        self._add_account(account_id)
-        self.input_field.clear()
+    def _on_player_manager_updated(self) -> None:
+        for account_id in player_manager.get_player_account_ids():
+            self.update_account(account_id, fetch=False)
 
-        cached = self.cache['players'].get(str(account_id))
-        if cached:
-            self._add_account(account_id)
+    def update_account(self, account_id: int, fetch: bool = False):
+        if not account_id in self.items:
+            item = QListWidgetItem()
+            item.setTextAlignment(Qt.AlignLeft)
+            item.setFont(QFont('Arial', 11))
+            item.setData(Qt.UserRole, account_id)
+            self.account_list.addItem(item)
+            self.items[account_id] = item
 
-    def _load_cache(self):
-        if Path(CACHE_FILE).exists():
-            with open(CACHE_FILE, 'r', encoding='utf-8') as fp:
-                self.cache = json.load(fp)
-        else:
-            self.cache = {
-                'lastUpdated': datetime.now().isoformat(),
-                'players': {},
-            }
+        name = player_manager.get_player_name(account_id)
+        self.items[account_id].setText(f'{name} ({account_id})')
+
+        if fetch:
+            self._start_fetch(account_id)
 
     def _save_cache(self):
-        self.cache['lastUpdated'] = datetime.now().isoformat()
-        with open(CACHE_FILE, 'w', encoding='utf-8') as fp:
-            json.dump(self.cache, fp, ensure_ascii=False)
+        self.account_cache['lastUpdated'] = datetime.now().isoformat()
+        with open(self.cache_file, 'w', encoding='utf-8') as fp:
+            json.dump(self.account_cache, fp, ensure_ascii=False)
 
-    def _fetch_account_info(self, account_id: int):
-        KEY = os.getenv('STEAM_API_KEY')
-        steam_id = str(0x110000100000000 + account_id)
-        url = url_manager.build_url('player_summaries', source='steam', key=KEY, steam_ids=steam_id)
+    def _start_fetch(self, account_id: int):
+        self.thread = QThread()
+        self.worker = SteamPlayerSummariesFetcher(account_id)
+        self.worker.moveToThread(self.thread)
 
-        try:
-            resp = requests.get(url, timeout=5)
-            resp.raise_for_status()
-            data = resp.json()
-            for player in data['response']['players']:
-                if steam_id := player.get('steam_id'):
-                    self.cache['players'][account_id] = player
-            self._save_cache()
-        except requests.RequestException as e:
-            print(f'请求失败: {e}')
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self._on_fetch_finished)
+        self.worker.error.connect(self._on_error)
+
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+
+        self.thread.start()
+
+    def _on_fetch_finished(self, data: dict) -> None:
+        print(data)
+
+    def _on_error(self, msg: str) -> None:
+        print(msg)

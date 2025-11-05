@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Dict, Optional, Union
+
 from pydantic import BaseModel, Field
 
 
@@ -16,24 +19,36 @@ class BestKills(BaseModel):
     p4: int
 
 
-class RankInfo(BaseModel):
-    rankall: str | int
-    rankcoop: str
+class GemTDRankInfo(BaseModel):
+    rankall: Union[int, str]
+    rankcoop: Union[int, str]
     rankrace: str
     score: int
     best_kills: BestKills
 
 
+class GemTDHero(BaseModel):
+    ability: Dict[str, int]
+    effect: str
+    extend: Optional[int] = Field(default=None)
+
+
+class GemTDOndutyHero(GemTDHero):
+    hero_id: str
+
+
 class GemTDHeroesData(BaseModel):
-    hero_sea: dict
+    time: str = Field(default_factory=lambda: datetime.now().isoformat())
+    hero_sea: Dict[str, GemTDHero]
+    onduty_hero: GemTDOndutyHero
     shell: int
     ice: int
     candy: int
     quest: GemTDQuest
-    rank_info: RankInfo
+    rank_info: GemTDRankInfo
 
 
 class GemTDHeroesResponse(BaseModel):
     err: int
     msg: str
-    data: dict[str, GemTDHeroesData]
+    data: Dict[str, GemTDHeroesData]

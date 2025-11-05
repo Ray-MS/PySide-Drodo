@@ -29,22 +29,27 @@ class GemTDHeroesFetcher(QObject):
             resp = requests.get(url, timeout=10)
             resp.raise_for_status()
             data = GemTDHeroesResponse(**resp.json()).data[self.steam_id]
-            self._save_cache(data.model_dump(by_alias=True))
+            self._save_cache(data)
             self.finished.emit(data)
         except Exception as e:
             self.error.emit(str(e))
 
     def _check_cache(self) -> bool:
-        if self.cache_file.exists():
-            with open(self.cache_file, 'r', encoding='utf-8') as fp:
-                cache = json.load(fp)
-                cache_time = datetime.fromisoformat(cache['lastUpdated'])
-                if (datetime.now() - cache_time).days == 0:
-                    data = GemTDHeroesData(**cache['data'])
-                    self.finished.emit(data)
-                    return True
+        try:
+            if self.cache_file.exists():
+                with open(self.cache_file, 'r', encoding='utf-8') as fp:
+                    cache = json.load(fp)
+                    cache_time = datetime.fromisoformat(cache['lastUpdated'])
+                    if (datetime.now() - cache_time).days == 0:
+                        data = GemTDHeroesData(**cache['data'])
+                        self.finished.emit(data)
+                        return True
+        except Exception as e:
+            self.error.emit(str(e))
+            return False
         return False
 
-    def _save_cache(self, data: dict) -> None:
+    def _save_cache(self, data: GemTDHeroesData) -> None:
+        value = {'lastUpdated': datetime.now().isoformat(), 'data': data.model_dump(by_alias=True)}
         with open(self.cache_file, 'w', encoding='utf-8') as fp:
-            json.dump({'lastUpdated': datetime.now().isoformat(), 'data': data}, fp, ensure_ascii=False)
+            json.dump(value, fp, ensure_ascii=False)

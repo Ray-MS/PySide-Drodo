@@ -5,8 +5,6 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from models.data_model import GemTDHeroesData
 from network.fetcher import GemTDHeroesFetcher
 
-from .gemtd_widget import GemTDRankWidget
-
 
 class DrodoWidget(QWidget):
     def __init__(self, account_id: int) -> None:
@@ -20,12 +18,10 @@ class DrodoWidget(QWidget):
     def _init_ui(self) -> None:
         account_id_label = QLabel(f"Account ID: {self.account_id}")
         self.wallet = _WalletWidget()
-        self.gemtd_rank = GemTDRankWidget(self.account_id)
 
         layout = QVBoxLayout(self)
         layout.addWidget(account_id_label)
         layout.addWidget(self.wallet)
-        layout.addWidget(self.gemtd_rank)
 
     def _start_fetch(self) -> None:
         self.thread = QThread()

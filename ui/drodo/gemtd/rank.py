@@ -1,19 +1,24 @@
+from typing import Optional
 
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from models.data_model import GemTDHeroesData
-from network.fetcher import GemTDHeroesFetcher
+from models.data_model import GemTDHeroesData, GemTDRankInfo
+from network import GemTDHeroesFetcher
 
 
-class GemTDRankWidget(QWidget):
-    def __init__(self, account_id: int) -> None:
+class GemTDRankCard(QWidget):
+    def __init__(self, account_id: Optional[int] = None, rank: Optional[GemTDRankInfo] = None) -> None:
         super().__init__()
 
-        self.account_id = account_id
-        self.steam_id = str(0x110000100000000 + account_id)
         self._init_ui()
-        self._start_fetch()
+
+        if rank is not None:
+            self._on_rank_updated(rank)
+        elif account_id is not None:
+            self.account_id = account_id
+            self.steam_id = str(0x110000100000000 + account_id)
+            self._start_fetch()
 
     def _init_ui(self):
         self.rank_score_label = QLabel("Rank Score: N/A")
@@ -45,7 +50,7 @@ class GemTDRankWidget(QWidget):
         self.worker.moveToThread(self.thread)
 
         self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self._on_fetch_finished)
+        self.worker.finished.connect(self.on_fetch_finished)
         self.worker.error.connect(self._on_error)
 
         self.worker.finished.connect(self.thread.quit)
@@ -54,7 +59,7 @@ class GemTDRankWidget(QWidget):
 
         self.thread.start()
 
-    def _on_fetch_finished(self, data: GemTDHeroesData):
+    def on_fetch_finished(self, data: GemTDHeroesData):
         self.rank_score_label.setText(f"Rank All: {data.rank_info.score}")
         self.rank_coop_label.setText(f"Rank Coop: {data.rank_info.rankcoop}")
         self.rank_race_label.setText(f"Rank Race: {data.rank_info.rankrace}")
