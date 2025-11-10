@@ -60,7 +60,7 @@ class GemTDRankCard(QWidget):
         self.thread.start()
 
     def on_fetch_finished(self, data: GemTDHeroesData):
-        self.rank_score_label.setText(f"Rank All: {data.rank_info.score}")
+        self.rank_score_label.setText(f"Rank All: {data.rank_info.score+1}")
         self.rank_coop_label.setText(f"Rank Coop: {data.rank_info.rankcoop}")
         self.rank_race_label.setText(f"Rank Race: {data.rank_info.rankrace}")
 

@@ -5,7 +5,7 @@ from models.data_model import GemTDHeroesData
 from network import GemTDHeroesFetcher
 
 from .gemtd import GemTDWelcomeWidget
-from .gemtd_herosea import GemTDHeroseaWidget
+from .gemtd_herosea import GemTDHeroSea
 from .gemtd_store import GemTDStoreWidget
 
 
@@ -25,7 +25,7 @@ class GemTDMainWidget(QWidget):
         self.tab_widget = QTabWidget()
 
         self.welcome = GemTDWelcomeWidget()
-        self.herosea = GemTDHeroseaWidget()
+        self.herosea = GemTDHeroSea(account_id=self.account_id)
         self.store = GemTDStoreWidget(account_id=self.account_id)
         self.page4 = self.create_page("页面4内容", "yellow")
 

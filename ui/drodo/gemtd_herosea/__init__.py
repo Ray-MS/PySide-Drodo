@@ -1,1 +1,1 @@
-from .herosea import GemTDHeroseaWidget
+from .herosea import GemTDHeroSea

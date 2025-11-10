@@ -6,6 +6,7 @@ sources:
                 goods: "gemtd/201803/goods/list/@{steam_id}"
                 heroes: "gemtd/202203/heros/get/@{steam_id}"
                 leaderboard: "gemtd/leaderboard/@{steam_id}"
+                save: "gemtd/hero/save/{hero_id}@{steam_id}"
     steam:
         base: "http://api.steampowered.com/"
         endpoints:
